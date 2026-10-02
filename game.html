@@ -71,8 +71,8 @@
     }
     @media (max-width: 380px) {
       .hud { inset: 12px 10px auto; gap: 4px; }
-      .pill { padding-inline: 8px; font-size: 12px; letter-spacing: 0; }
-      .photo-button { width: 34px; height: 34px; flex-basis: 34px; }
+      .pill { padding: 6px 5px; border-width: 1px; font-size: 10px; letter-spacing: 0; }
+      .photo-button { width: 32px; height: 32px; flex-basis: 32px; }
     }
     .photo-button {
       display: grid;
@@ -88,7 +88,14 @@
       color: white;
       box-shadow: none;
     }
+    .photo-button[hidden] { display: none; }
     .photo-button:hover { background: rgba(15, 23, 42, 0.9); }
+    .exit-button {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      z-index: 5;
+    }
     .photo-button svg { width: 18px; height: 18px; }
     .photo-button img {
       width: 100%;
@@ -270,6 +277,13 @@
       </button>
       <input id="photoInput" type="file" accept="image/*" aria-label="Choose a photo">
     </div>
+    <button class="photo-button exit-button" id="exitButton" type="button" aria-label="Exit game and return to the gift page" title="Return to the gift page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 17l5-5-5-5" />
+        <path d="M15 12H3" />
+        <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
+      </svg>
+    </button>
 
     <canvas id="gameCanvas" width="420" height="720"></canvas>
 
@@ -293,6 +307,7 @@
     const targetEl = document.getElementById('target');
     const timeEl = document.getElementById('time');
     const bestEl = document.getElementById('best');
+    const exitButton = document.getElementById('exitButton');
     const photoButton = document.getElementById('photoButton');
     const photoInput = document.getElementById('photoInput');
     const overlay = document.getElementById('overlay');
@@ -352,7 +367,7 @@
         id: 'sport',
         icon: '⚽',
         name: 'Sport',
-        description: 'Play as a team',
+        description: 'Catch Spain players only',
         gift: 'Your very own tiny champion trophy.',
         punchline: 'You scored the best teammate. (It is me.)',
         questions: [
@@ -463,6 +478,33 @@
     ];
 
     let activeTheme = null;
+    let spainPlayerIndex = 0;
+    let spainPlayerDeck = [];
+    const spainPlayerNames = [
+      'Unai Simon', 'David Raya', 'Alex Remiro', 'Dani Carvajal', 'Jesus Navas',
+      'Robin Le Normand', 'Nacho Fernandez', 'Aymeric Laporte', 'Dani Vivian',
+      'Alejandro Grimaldo', 'Marc Cucurella', 'Rodri', 'Martin Zubimendi',
+      'Mikel Merino', 'Fabian Ruiz', 'Pedri', 'Fermin Lopez', 'Alex Baena',
+      'Lamine Yamal', 'Nico Williams', 'Alvaro Morata', 'Joselu',
+      'Mikel Oyarzabal', 'Ferran Torres', 'Ayoze Perez', 'Dani Olmo'
+    ];
+    const decoyPlayerNames = [
+      'Lionel Messi', 'Kylian Mbappe', 'Cristiano Ronaldo', 'Erling Haaland',
+      'Jude Bellingham', 'Mohamed Salah', 'Harry Kane', 'Neymar',
+      'Kevin De Bruyne', 'Luka Modric', 'Virgil van Dijk', 'Robert Lewandowski'
+    ];
+
+    function shuffleSpainPlayerDeck() {
+      spainPlayerDeck = [
+        ...spainPlayerNames.map((name) => ({ name, isSpain: true })),
+        ...decoyPlayerNames.map((name) => ({ name, isSpain: false }))
+      ];
+      for (let index = spainPlayerDeck.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [spainPlayerDeck[index], spainPlayerDeck[swapIndex]] = [spainPlayerDeck[swapIndex], spainPlayerDeck[index]];
+      }
+      spainPlayerIndex = 0;
+    }
 
     function resetPlayer() {
       player = {
@@ -531,12 +573,14 @@
       if (!activeTheme) return;
       questionIndex = 0;
       answers = [];
+      if (themeId === 'sport') shuffleSpainPlayerDeck();
       resetGame();
       startRound();
     }
 
     function renderThemePicker() {
       gameState = 'theme-select';
+      activeTheme = null;
       setOverlay('Choose a theme', 'Pick an adventure to begin your six levels.', '');
       panelEl.classList.add('theme-picker');
       choicesEl.classList.add('theme-grid');
@@ -566,6 +610,12 @@
         button.addEventListener('click', () => startGame(theme.id));
         choicesEl.append(button);
       }
+    }
+
+    function exitGame() {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      window.location.href = 'index.html';
     }
 
     function startRound() {
@@ -714,19 +764,34 @@
     }
 
     function spawnItem() {
+      const isSport = activeTheme?.id === 'sport';
       const roll = Math.random();
-      let type = 'heart';
-      if (roll > 0.72) type = 'gift';
-      if (roll > 0.9) type = 'cloud';
+      let type = isSport ? 'player' : 'heart';
+      if (!isSport && roll > 0.72) type = 'gift';
+      if (!isSport && roll > 0.9) type = 'cloud';
+      const playerEntry = isSport ? spainPlayerDeck[spainPlayerIndex++ % spainPlayerDeck.length] : null;
+      const label = playerEntry?.name || '';
+      const labelWidth = isSport ? getPlayerLabelWidth(label) : 0;
 
       falling.push({
         type,
+        label,
+        isSpain: playerEntry?.isSpain || false,
+        labelWidth,
         x: 30 + Math.random() * (canvas.width - 60),
         y: -20,
         size: type === 'cloud' ? 28 : 22,
-        speed: type === 'cloud' ? 175 : 210 + Math.random() * 60,
-        drift: (Math.random() - 0.5) * 60
+        speed: type === 'cloud' ? 175 : type === 'player' ? 105 + Math.random() * 25 : 210 + Math.random() * 60,
+        drift: (Math.random() - 0.5) * (type === 'player' ? 28 : 60)
       });
+    }
+
+    function getPlayerLabelWidth(name) {
+      ctx.save();
+      ctx.font = 'bold 12px Georgia, "Times New Roman", serif';
+      const width = Math.ceil(ctx.measureText(name).width) + 34;
+      ctx.restore();
+      return Math.min(174, Math.max(100, width));
     }
 
     function addBurst(x, y, color, amount) {
@@ -760,7 +825,8 @@
       timeEl.textContent = Math.ceil(timeLeft);
 
       spawnTimer += dt;
-      if (spawnTimer > 0.9) {
+      const spawnInterval = activeTheme?.id === 'sport' ? 1.2 : 0.9;
+      if (spawnTimer > spawnInterval) {
         spawnTimer = 0;
         spawnItem();
       }
@@ -774,17 +840,21 @@
           item.drift *= -1;
         }
 
-        const hitX = Math.abs(item.x - player.x) < (player.w * 0.6 + item.size * 0.8);
-        const hitY = item.y + item.size > player.y && item.y < player.y + player.h + 18;
+        const itemHalfWidth = item.type === 'player' ? item.labelWidth / 2 : item.size * 0.8;
+        const itemHalfHeight = item.type === 'player' ? 15 : item.size;
+        const hitX = Math.abs(item.x - player.x) < (player.w / 2 + itemHalfWidth);
+        const hitY = item.y + itemHalfHeight > player.y && item.y - itemHalfHeight < player.y + player.h + 18;
 
         if (hitX && hitY) {
           if (item.type === 'cloud') {
             score = Math.max(0, score - 1);
             addBurst(item.x, item.y, '#ef4444', 14);
             timeLeft = Math.max(0, timeLeft - 2);
+          } else if (item.type === 'player' && !item.isSpain) {
+            addBurst(item.x, item.y, '#ef4444', 12);
           } else {
             score += item.type === 'gift' ? 2 : 1;
-            addBurst(item.x, item.y, item.type === 'gift' ? '#fbbf24' : '#7dd3fc', 12);
+            addBurst(item.x, item.y, item.type === 'gift' ? '#fbbf24' : '#22c55e', 12);
           }
 
           falling.splice(i, 1);
@@ -925,6 +995,33 @@
       ctx.beginPath();
       ctx.ellipse(x + size * 0.42, y + size * 0.1, size * 0.32, size * 0.22, -0.3, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    function drawPlayerName(item) {
+      const width = item.labelWidth;
+      const height = 30;
+      const left = item.x - width / 2;
+      const top = item.y - height / 2;
+      ctx.save();
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#aa151b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(left, top, width, height, 9);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#aa151b';
+      ctx.fillRect(left + 6, top + 6, 14, 18);
+      ctx.fillStyle = '#f1bf00';
+      ctx.fillRect(left + 6, top + 11, 14, 8);
+
+      ctx.fillStyle = '#111827';
+      ctx.font = 'bold 12px Georgia, "Times New Roman", serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, left + 25, item.y, width - 30);
+      ctx.restore();
     }
 
     function drawCupcake(x, y, size) {
@@ -1294,9 +1391,12 @@
 
     function drawItem(item) {
       const themeId = activeTheme?.id || 'story';
+      if (item.type === 'player') {
+        drawPlayerName(item);
+        return;
+      }
       if (item.type === 'heart') {
-        if (themeId === 'sport') drawSoccerBall(item.x, item.y, item.size);
-        else if (themeId === 'travel') drawTravelCase(item.x, item.y, item.size);
+        if (themeId === 'travel') drawTravelCase(item.x, item.y, item.size);
         else if (themeId === 'dreams') drawStar(item.x, item.y, item.size, '#fde68a');
         else if (themeId === 'music') drawMusicNote(item.x, item.y, item.size);
         else if (themeId === 'food') drawCupcake(item.x, item.y, item.size);
@@ -1353,6 +1453,7 @@
       if (code === 'ArrowRight' || code === 'KeyD') keys.right = active;
     }
 
+    exitButton.addEventListener('click', exitGame);
     photoButton.addEventListener('click', () => photoInput.click());
 
     photoInput.addEventListener('change', () => {
