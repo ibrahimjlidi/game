@@ -1,0 +1,768 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sawsen: Star Catch</title>
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1d4ed8;
+      --gold: #fbbf24;
+      --red: #ef4444;
+      --sky: #dbeafe;
+      --mint: #7dd3fc;
+      --ink: #e2e8f0;
+      --panel: rgba(15, 23, 42, 0.48);
+      --shadow: rgba(15, 23, 42, 0.28);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Georgia, "Times New Roman", serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--ink);
+    }
+    body {
+      display: grid;
+      place-items: center;
+      padding: env(safe-area-inset-top, 0px) 12px env(safe-area-inset-bottom, 0px);
+    }
+    #game {
+      position: relative;
+      width: min(92vw, 420px);
+      height: min(82vh, 720px);
+      border-radius: 28px;
+      border: 4px solid rgba(255,255,255,0.4);
+      box-shadow: 0 22px 52px var(--shadow);
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(125, 211, 252, 0.9), rgba(219, 234, 254, 0.9));
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      touch-action: none;
+    }
+    .hud {
+      position: absolute;
+      inset: 14px 14px auto 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .pill {
+      background: rgba(15, 23, 42, 0.58);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      backdrop-filter: blur(4px);
+    }
+    @media (max-width: 380px) {
+      .hud { inset: 12px 10px auto; gap: 4px; }
+      .pill { padding-inline: 8px; font-size: 12px; letter-spacing: 0; }
+      .photo-button { width: 34px; height: 34px; flex-basis: 34px; }
+    }
+    .photo-button {
+      display: grid;
+      place-items: center;
+      pointer-events: auto;
+      flex: 0 0 36px;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.7);
+      color: white;
+      box-shadow: none;
+    }
+    .photo-button:hover { background: rgba(15, 23, 42, 0.9); }
+    .photo-button svg { width: 18px; height: 18px; }
+    .photo-button img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    #photoInput { display: none; }
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.42);
+      z-index: 4;
+      transition: opacity 0.25s ease;
+    }
+    #overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .panel {
+      width: min(100%, 300px);
+      max-height: 100%;
+      overflow-y: auto;
+      padding: 24px 18px 20px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.14);
+      border: 2px solid rgba(255,255,255,0.38);
+      text-align: center;
+      box-shadow: 0 18px 35px rgba(15, 23, 42, 0.18);
+      backdrop-filter: blur(4px);
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: #dbeafe;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 8vw, 42px);
+      line-height: 1;
+      color: #fff;
+      text-shadow: 0 4px 12px rgba(15, 23, 42, 0.32);
+    }
+    p {
+      margin: 0 0 18px;
+      line-height: 1.5;
+      font-size: 16px;
+      color: #f8fafc;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 24px;
+      font: inherit;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--gold), #f59e0b);
+      color: #111827;
+      box-shadow: 0 8px 18px rgba(251, 191, 36, 0.35);
+    }
+    button:active { transform: translateY(1px); }
+    button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    #choices {
+      display: grid;
+      gap: 9px;
+      margin: 16px 0;
+    }
+    .choice-button {
+      width: 100%;
+      padding: 11px 14px;
+      border: 2px solid rgba(255,255,255,0.55);
+      background: rgba(15, 23, 42, 0.55);
+      color: white;
+      box-shadow: none;
+      font-size: 16px;
+    }
+    .choice-button:hover { background: rgba(15, 23, 42, 0.78); }
+    #answerInput {
+      width: 100%;
+      min-height: 94px;
+      padding: 12px;
+      resize: vertical;
+      border: 2px solid rgba(255,255,255,0.65);
+      border-radius: 12px;
+      font: inherit;
+      font-size: 16px;
+    }
+    #response, #recap {
+      color: #fff;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    #recap { text-align: left; font-size: 14px; }
+    #recap p { margin: 0 0 10px; font-size: 14px; }
+    #startBtn[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div class="hud">
+      <div class="pill">Score <span id="score">0</span>/<span id="target">9</span></div>
+      <div class="pill">Time <span id="time">40</span></div>
+      <div class="pill">Best <span id="best">0</span></div>
+      <button class="photo-button" id="photoButton" type="button" aria-label="Upload a circular photo to replace the hearts" title="Upload a circular photo to replace the hearts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 16V4m-4 4 4-4 4 4" />
+          <path d="M20 16.5v3H4v-3" />
+        </svg>
+      </button>
+      <input id="photoInput" type="file" accept="image/*" aria-label="Choose a photo">
+    </div>
+
+    <canvas id="gameCanvas" width="420" height="720"></canvas>
+
+    <div id="overlay">
+      <div class="panel">
+        <p class="eyebrow">For Sawsen</p>
+        <h1 id="title">Star Catch</h1>
+        <p id="message">Catch the glowing hearts and gifts, dodge the storm clouds, and reach 9 points to unlock the first question.</p>
+        <div id="choices"></div>
+        <p id="response" hidden></p>
+        <div id="recap"></div>
+        <button id="startBtn">Start the mission</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const targetEl = document.getElementById('target');
+    const timeEl = document.getElementById('time');
+    const bestEl = document.getElementById('best');
+    const photoButton = document.getElementById('photoButton');
+    const photoInput = document.getElementById('photoInput');
+    const overlay = document.getElementById('overlay');
+    const titleEl = document.getElementById('title');
+    const messageEl = document.getElementById('message');
+    const choicesEl = document.getElementById('choices');
+    const responseEl = document.getElementById('response');
+    const recapEl = document.getElementById('recap');
+    const startBtn = document.getElementById('startBtn');
+
+    const POINTS_PER_LEVEL = 9;
+    const START_TIME = 40;
+    let bestScore = Number(localStorage.getItem('sawsen-star-best') || 0);
+    bestEl.textContent = bestScore;
+
+    let gameState = 'ready';
+    let score = 0;
+    let timeLeft = START_TIME;
+    let player;
+    let falling = [];
+    let particles = [];
+    let animationId = null;
+    let lastTs = 0;
+    let spawnTimer = 0;
+    let pointerX = canvas.width / 2;
+    let keys = { left: false, right: false };
+    let questionIndex = 0;
+    let answers = [];
+    let heartImage = new Image();
+    let uploadedPhotoUrl = null;
+    heartImage.onload = () => {
+      setPhotoButtonPreview(heartImage);
+      draw();
+    };
+    heartImage.onerror = () => { heartImage = null; };
+    heartImage.src = localStorage.getItem('sawsen-heart-photo') || 'sawsen-photo.jpg';
+
+    const questions = [
+      {
+        summary: 'Path',
+        prompt: 'You wake up in a peaceful place with two paths: a flower-lined street and a street full of stars. Which do you choose?',
+        choices: ['The street of flowers', 'The street of stars']
+      },
+      {
+        summary: 'Key',
+        prompt: 'At a great door, you find two keys, one red and one blue. Which key do you choose?',
+        choices: ['The red key', 'The blue key']
+      },
+      {
+        summary: 'Doorway path',
+        prompt: 'The door opens onto two paths: the path of ذكريات (memories) and the path of أمنيات (wishes). Where do you go?',
+        choices: ['The path of memories', 'The path of wishes']
+      },
+      {
+        summary: 'Gift',
+        prompt: 'In the room, there are three gifts. Which one do you choose?',
+        choices: [
+          'The big gift',
+          'The small gift',
+          { label: 'The medium gift', feedback: 'The medium gift is empty. Inside, you find a special question just for you.' }
+        ]
+      },
+      {
+        summary: 'Honest conversations',
+        prompt: 'What do you feel when we talk honestly?',
+        answer: true
+      },
+      {
+        summary: 'Beach wish',
+        prompt: 'At the beach, you can send your أمنية (wish) to one person. Who would you send it to?',
+        answer: true
+      }
+    ];
+
+    function resetPlayer() {
+      player = {
+        x: canvas.width / 2,
+        y: canvas.height - 42,
+        w: 76,
+        h: 22,
+        speed: 420
+      };
+    }
+
+    function setOverlay(title, message, buttonText) {
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+      startBtn.textContent = buttonText;
+      startBtn.hidden = false;
+      choicesEl.replaceChildren();
+      responseEl.hidden = true;
+      responseEl.textContent = '';
+      recapEl.replaceChildren();
+      overlay.classList.remove('hidden');
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+    }
+
+    function setPhotoButtonPreview(image) {
+      const preview = document.createElement('img');
+      preview.alt = '';
+      preview.src = image.currentSrc || image.src;
+      photoButton.replaceChildren(preview);
+      photoButton.title = 'Change the collectible photo';
+      photoButton.setAttribute('aria-label', 'Change the collectible photo');
+    }
+
+    function getTargetScore() {
+      return (questionIndex + 1) * POINTS_PER_LEVEL;
+    }
+
+    function updateScoreDisplay() {
+      scoreEl.textContent = score;
+      targetEl.textContent = getTargetScore();
+    }
+
+    function resetGame() {
+      score = 0;
+      updateScoreDisplay();
+    }
+
+    function resetRound() {
+      timeLeft = START_TIME;
+      timeEl.textContent = Math.ceil(timeLeft);
+      falling = [];
+      particles = [];
+      spawnTimer = 0;
+      resetPlayer();
+      pointerX = canvas.width / 2;
+      updateScoreDisplay();
+    }
+
+    function startGame() {
+      questionIndex = 0;
+      answers = [];
+      resetGame();
+      startRound();
+    }
+
+    function startRound() {
+      resetRound();
+      gameState = 'playing';
+      hideOverlay();
+      lastTs = 0;
+      cancelAnimationFrame(animationId);
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function endGame(result) {
+      gameState = 'ended';
+      cancelAnimationFrame(animationId);
+
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('sawsen-star-best', String(bestScore));
+        bestEl.textContent = bestScore;
+      }
+
+      if (result === 'win') {
+        renderQuestion();
+      } else {
+        setOverlay('Try again!', `The clouds got in the way. Retry level ${questionIndex + 1} and reach ${getTargetScore()} points.`, 'Retry level');
+      }
+    }
+
+    function renderQuestion() {
+      const question = questions[questionIndex];
+      gameState = 'question';
+      setOverlay(`Level ${questionIndex + 1} of ${questions.length}`, question.prompt, question.answer ? 'Save answer' : 'Continue');
+
+      if (question.answer) {
+        const input = document.createElement('textarea');
+        input.id = 'answerInput';
+        input.maxLength = 500;
+        input.placeholder = 'Write your answer here...';
+        input.setAttribute('aria-label', question.prompt);
+        choicesEl.append(input);
+        startBtn.hidden = false;
+        return;
+      }
+
+      startBtn.hidden = true;
+      for (const choice of question.choices) {
+        const option = typeof choice === 'string' ? { label: choice } : choice;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'choice-button';
+        button.textContent = option.label;
+        button.addEventListener('click', () => {
+          answers[questionIndex] = option.label;
+          responseEl.textContent = option.feedback || `You chose: ${option.label}`;
+          responseEl.hidden = false;
+          startBtn.hidden = false;
+        });
+        choicesEl.append(button);
+      }
+    }
+
+    function advanceQuestion() {
+      questionIndex += 1;
+      if (questionIndex < questions.length) {
+        gameState = 'round-ready';
+        updateScoreDisplay();
+        setOverlay(`Level ${questionIndex + 1} ready`, `Your score carries over. Reach ${getTargetScore()} points to unlock the next question.`, `Play level ${questionIndex + 1}`);
+        return;
+      }
+
+      gameState = 'complete';
+      setOverlay('Your little journey', 'Thank you for sharing your choices and answers.', 'Play again');
+      answers.forEach((answer, index) => {
+        const entry = document.createElement('p');
+        entry.textContent = `${index + 1}. ${questions[index].summary}: ${answer || 'No answer given.'}`;
+        recapEl.append(entry);
+      });
+    }
+
+    function handleOverlayAction() {
+      if (gameState === 'ready' || gameState === 'complete') {
+        startGame();
+        return;
+      }
+
+      if (gameState === 'ended' || gameState === 'round-ready') {
+        startRound();
+        return;
+      }
+
+      if (gameState !== 'question') return;
+      const question = questions[questionIndex];
+      if (question.answer) {
+        const input = document.getElementById('answerInput');
+        const answer = input.value.trim();
+        if (!answer) {
+          input.focus();
+          return;
+        }
+        answers[questionIndex] = answer;
+      } else if (!answers[questionIndex]) {
+        return;
+      }
+      advanceQuestion();
+    }
+
+    function spawnItem() {
+      const roll = Math.random();
+      let type = 'heart';
+      if (roll > 0.72) type = 'gift';
+      if (roll > 0.9) type = 'cloud';
+
+      falling.push({
+        type,
+        x: 30 + Math.random() * (canvas.width - 60),
+        y: -20,
+        size: type === 'cloud' ? 28 : 22,
+        speed: type === 'cloud' ? 175 : 210 + Math.random() * 60,
+        drift: (Math.random() - 0.5) * 60
+      });
+    }
+
+    function addBurst(x, y, color, amount) {
+      for (let i = 0; i < amount; i++) {
+        particles.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 180,
+          vy: (Math.random() - 0.8) * 180,
+          radius: 2 + Math.random() * 4,
+          life: 1,
+          color
+        });
+      }
+    }
+
+    function update(dt) {
+      if (keys.left) player.x -= player.speed * dt;
+      if (keys.right) player.x += player.speed * dt;
+
+      const diff = pointerX - player.x;
+      player.x += diff * 0.18;
+      player.x = Math.max(36, Math.min(canvas.width - 36, player.x));
+
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        endGame('lose');
+        return;
+      }
+      timeEl.textContent = Math.ceil(timeLeft);
+
+      spawnTimer += dt;
+      if (spawnTimer > 0.9) {
+        spawnTimer = 0;
+        spawnItem();
+      }
+
+      for (let i = falling.length - 1; i >= 0; i--) {
+        const item = falling[i];
+        item.x += item.drift * dt;
+        item.y += item.speed * dt;
+
+        if (item.x < 18 || item.x > canvas.width - 18) {
+          item.drift *= -1;
+        }
+
+        const hitX = Math.abs(item.x - player.x) < (player.w * 0.6 + item.size * 0.8);
+        const hitY = item.y + item.size > player.y && item.y < player.y + player.h + 18;
+
+        if (hitX && hitY) {
+          if (item.type === 'cloud') {
+            score = Math.max(0, score - 1);
+            addBurst(item.x, item.y, '#ef4444', 14);
+            timeLeft = Math.max(0, timeLeft - 2);
+          } else {
+            score += item.type === 'gift' ? 2 : 1;
+            addBurst(item.x, item.y, item.type === 'gift' ? '#fbbf24' : '#7dd3fc', 12);
+          }
+
+          falling.splice(i, 1);
+          updateScoreDisplay();
+
+          if (score >= getTargetScore()) {
+            endGame('win');
+            return;
+          }
+          continue;
+        }
+
+        if (item.y > canvas.height + 30) {
+          falling.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 120 * dt;
+        p.life -= dt * 1.4;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function drawHeart(x, y, size, color) {
+      if (heartImage?.complete && heartImage.naturalWidth > 0) {
+        const centerY = y + size * 0.35;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, centerY, size, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(heartImage, x - size, centerY - size, size * 2, size * 2);
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, centerY, size, 0, Math.PI * 2);
+        ctx.stroke();
+        return;
+      }
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, y + size * 0.3);
+      ctx.bezierCurveTo(x - size, y - size * 0.5, x - size * 1.5, y + size * 0.4, x, y + size * 1.2);
+      ctx.bezierCurveTo(x + size * 1.5, y + size * 0.4, x + size, y - size * 0.5, x, y + size * 0.3);
+      ctx.fill();
+    }
+
+    function drawGift(x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x - size * 0.7, y - size * 0.9, size * 1.4, size * 1.8);
+      ctx.fillRect(x - size * 0.2, y - size * 1.5, size * 0.4, size * 1.1);
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.9, y - size * 0.4);
+      ctx.lineTo(x, y - size * 1.2);
+      ctx.lineTo(x + size * 0.9, y - size * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x - size * 0.15, y - size * 0.2, size * 0.3, size * 1.2);
+      ctx.fillRect(x - size * 0.75, y - size * 0.15, size * 1.5, size * 0.3);
+    }
+
+    function drawCloud(x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x - size * 0.5, y, size * 0.35, 0, Math.PI * 2);
+      ctx.arc(x, y - size * 0.2, size * 0.42, 0, Math.PI * 2);
+      ctx.arc(x + size * 0.5, y, size * 0.35, 0, Math.PI * 2);
+      ctx.arc(x, y + size * 0.18, size * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawBackground() {
+      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      sky.addColorStop(0, '#7dd3fc');
+      sky.addColorStop(0.6, '#dbeafe');
+      sky.addColorStop(1, '#c7d2fe');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 18; i++) {
+        const x = (i * 37 + (score * 3)) % canvas.width;
+        const y = (i * 53) % (canvas.height - 120);
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#9ae6b4';
+      ctx.fillRect(0, canvas.height - 26, canvas.width, 26);
+      ctx.fillStyle = '#6ee7b7';
+      for (let i = 0; i < canvas.width; i += 22) {
+        ctx.fillRect(i, canvas.height - 26, 10, 10);
+      }
+    }
+
+    function drawPlayer() {
+      const x = player.x;
+      const y = player.y;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(x - player.w / 2, y, player.w, 8);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(x - 18, y - 18, 36, 18);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(x - 8, y - 26, 16, 12);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(x - player.w / 2 + 10, y + 8, player.w - 20, 7);
+    }
+
+    function drawItem(item) {
+      if (item.type === 'heart') drawHeart(item.x, item.y, item.size, '#ef4444');
+      if (item.type === 'gift') drawGift(item.x, item.y, item.size, '#fbbf24');
+      if (item.type === 'cloud') drawCloud(item.x, item.y, item.size, '#dbeafe');
+    }
+
+    function drawParticles() {
+      for (const p of particles) {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function draw() {
+      drawBackground();
+
+      for (const item of falling) {
+        drawItem(item);
+      }
+
+      drawParticles();
+      drawPlayer();
+    }
+
+    function loop(ts) {
+      if (gameState !== 'playing') return;
+
+      if (!lastTs) lastTs = ts;
+      const dt = Math.min(0.033, (ts - lastTs) / 1000);
+      lastTs = ts;
+
+      update(dt);
+      draw();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function moveByKey(code, active) {
+      if (code === 'ArrowLeft' || code === 'KeyA') keys.left = active;
+      if (code === 'ArrowRight' || code === 'KeyD') keys.right = active;
+    }
+
+    photoButton.addEventListener('click', () => photoInput.click());
+
+    photoInput.addEventListener('change', () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem('sawsen-heart-photo', reader.result);
+        } catch (error) {
+          console.warn('Could not save the photo for future visits.', error);
+        }
+      };
+      reader.readAsDataURL(file);
+
+      const photoUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        if (uploadedPhotoUrl) URL.revokeObjectURL(uploadedPhotoUrl);
+        uploadedPhotoUrl = photoUrl;
+        heartImage = image;
+        setPhotoButtonPreview(image);
+        draw();
+      };
+      image.onerror = () => URL.revokeObjectURL(photoUrl);
+      image.src = photoUrl;
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      pointerX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    });
+
+    canvas.addEventListener('pointerdown', () => {
+      if (gameState !== 'playing') {
+        startGame();
+      }
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' || event.code === 'Enter') {
+        if (gameState === 'ready' || gameState === 'complete') startGame();
+        else if (gameState === 'ended' || gameState === 'round-ready') startRound();
+      }
+      moveByKey(event.code, true);
+    });
+
+    window.addEventListener('keyup', (event) => {
+      moveByKey(event.code, false);
+    });
+
+    startBtn.addEventListener('click', handleOverlayAction);
+
+    resetRound();
+    draw();
+    setOverlay('Star Catch', 'Catch the glowing hearts and gifts, dodge the storm clouds, and reach 9 points to unlock the first question.', 'Start the mission');
+  </script>
+</body>
+</html>

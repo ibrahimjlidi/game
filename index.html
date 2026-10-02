@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mission: Sawsen</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+<style>
+:root{--red:#e11d2e;--gold:#fbbf24;--blue:#1d3a8a;--ink:#0b1437;--paper:#fff8e7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="dark"]{--paper:#fff8e7}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--blue) radial-gradient(rgba(255,255,255,.12) 2px,transparent 2.5px) 0 0/16px 16px;color:var(--paper);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;text-align:center}
+.bang{font-family:Bangers,Impact,"Arial Black",sans-serif;letter-spacing:.04em;font-weight:400}
+main{max-width:520px;margin:0 auto;padding:20px 16px 50px}
+h1{font-size:clamp(40px,12vw,66px);line-height:.95;margin:8px 0;color:var(--gold);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--ink)}
+h2{font-size:clamp(28px,8vw,38px);margin:26px 0 8px;color:var(--gold);text-shadow:2px 2px 0 var(--red)}
+p{line-height:1.5;margin:8px 0}
+button,a.btn{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.btn{display:inline-block;background:var(--red);color:#fff;border:4px solid var(--ink);border-radius:14px;padding:12px 26px;font-size:26px;box-shadow:5px 5px 0 var(--ink);text-decoration:none;margin:6px}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.btn.alt{background:var(--paper);color:var(--ink)}
+.hide{display:none!important}
+.dos{background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:8px;padding:20px;box-shadow:6px 6px 0 var(--ink);text-align:left;position:relative;margin:18px 0}
+.dos .row{display:flex;justify-content:space-between;border-bottom:2px dashed #b9b09a;padding:8px 0;font-size:17px;opacity:0;animation:in .5s forwards}
+.dos .row:nth-child(2){animation-delay:.4s}.dos .row:nth-child(3){animation-delay:.9s}.dos .row:nth-child(4){animation-delay:1.4s}.dos .row:nth-child(5){animation-delay:1.9s}
+.dos b{color:var(--red)}
+.stamp{position:absolute;right:10px;top:-20px;transform:rotate(8deg);border:4px solid var(--red);color:var(--red);background:var(--paper);padding:2px 12px;font-size:30px;opacity:0;animation:in .4s 2.4s forwards}
+@keyframes in{to{opacity:1}}
+.go{opacity:0;animation:in .5s 2.8s forwards}
+.sc{position:relative;height:150px;margin:14px 0;border:4px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink);overflow:hidden;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px}
+.sc h3{margin:0;font-size:30px;color:var(--red)}.sc p{margin:2px 0 0;font-size:15px}
+.sc canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity .6s}
+.cd{display:flex;gap:10px;justify-content:center}
+.cd div{background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:12px;padding:8px 14px;min-width:74px;box-shadow:4px 4px 0 var(--ink)}
+.cd b{display:block;font-size:36px;font-family:Bangers,Impact,sans-serif;color:var(--red)}
+.ow{background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:12px;margin:10px 0;text-align:left;box-shadow:4px 4px 0 var(--ink)}
+.ow button{width:100%;background:none;border:0;padding:12px 14px;font-size:22px;color:var(--red);text-align:left}
+.ow p{padding:0 14px 14px;margin:0;font-size:16px}
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gal img{width:100%;aspect-ratio:1;object-fit:cover;border:4px solid var(--ink);border-radius:12px}
+#fin{background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:18px;padding:20px;box-shadow:6px 6px 0 var(--ink);margin-top:28px}
+#fin h2{color:var(--red);text-shadow:none;margin-top:0}
+#fin p{font-size:19px}
+#cf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.row,.stamp,.go{animation-duration:.01s;animation-delay:0s}}
+</style>
+</head>
+<body>
+<canvas id="cf"></canvas>
+<main>
+<section id="s1">
+  <p class="bang" style="font-size:24px;margin-top:24px">Top secret</p>
+  <h1 class="bang" id="ttl"></h1>
+  <div class="dos">
+    <span class="stamp bang">Approved</span>
+    <div class="row"><span>Agent</span><b id="d1"></b></div>
+    <div class="row"><span>Codename</span><b>Night Shift Hero</b></div>
+    <div class="row"><span>Skills</span><b>Care, strength, courage</b></div>
+    <div class="row"><span>Next stop</span><b>España</b></div>
+  </div>
+  <button class="btn go bang" id="open">Open the dossier</button>
+</section>
+
+<section id="s2" class="hide">
+  <h2 class="bang" id="hey"></h2>
+  <p>Scratch each card with your finger to reveal your rewards.</p>
+  <div id="cards"></div>
+
+  <div id="cdw" class="hide">
+    <h2 class="bang" id="cdt"></h2>
+    <div class="cd"><div><b id="cd1">0</b>days</div><div><b id="cd2">0</b>hours</div><div><b id="cd3">0</b>min</div></div>
+  </div>
+
+  <h2 class="bang">Open when…</h2>
+  <div id="ow"></div>
+
+  <div id="galw" class="hide"><h2 class="bang">Our moments</h2><div class="gal" id="gal"></div></div>
+
+  <div id="mediaw" class="hide"><h2 class="bang">Press play</h2><div id="media"></div></div>
+
+  <div id="fin" class="hide">
+    <h2 class="bang">Mission complete!</h2>
+    <p id="msg"></p><p id="from" style="font-weight:700"></p>
+    <a class="btn bang" id="game" href="#">Play your mission</a>
+    <button class="btn alt bang" id="again" style="font-size:20px">More confetti</button>
+  </div>
+</section>
+</main>
+<script>
+// ---- Edit for the gift ----
+const NAME="Sawsen", FROM="";
+const MSG="You work so hard, you train harder, and you keep dreaming big. Nurse by day, hero all the time. I'm proud of you.";
+const GIFTS=[
+ {t:"Gym Hero Pass",d:"One workout together. You pick the day and the exercises."},
+ {t:"Champion's Cup",d:"One coffee on me, in your favourite cup. Champions choose the place."},
+ {t:"¡Vamos a España!",d:"A dream trip to Spain is on the mission list."}
+];
+const COUNTDOWN_LABEL="Countdown to España", COUNTDOWN_DATE="2027-07-15";  // leave COUNTDOWN_DATE "" to hide
+const OPEN_WHEN=[
+ {w:"you're tired after a shift",t:"Sit down, breathe, drink some water. You are helping real people, and that matters more than you know."},
+ {w:"you doubt yourself",t:"Remember who you are: someone who shows up, studies hard and cares. Doubt is just noise."},
+ {w:"you miss me",t:"Look at the sky. We're under the same one. Send me a message, I'll answer."},
+ {w:"you finish your exams",t:"Done! Celebrate properly. Rest, eat well, and get ready for the next adventure."}
+];
+const PHOTOS=[];                       // data: URIs of photos
+const VIDEO_URL="";                    // e.g. an unlisted YouTube link
+const PLAYLISTS=[{l:"Gym playlist",u:""},{l:"Spain playlist",u:""}];
+const GAME_URL="game.html";            // keep game.html in the same folder; "" hides the button
+// ---------------------------
+const $=id=>document.getElementById(id);
+$("ttl").textContent="Mission: "+NAME;$("d1").textContent=NAME;$("hey").textContent="¡Sorpresa, "+NAME+"!";
+$("msg").textContent=MSG;$("from").textContent=FROM?"— "+FROM:"";
+if(GAME_URL)$("game").href=GAME_URL;else $("game").classList.add("hide");
+// scratch cards
+let left=GIFTS.length;
+GIFTS.forEach(g=>{
+  const b=document.createElement("div");b.className="sc";
+  b.innerHTML='<h3 class="bang">'+g.t+'</h3><p>'+g.d+'</p><canvas></canvas>';$("cards").appendChild(b);
+});
+function scratch(box){
+  const c=box.querySelector("canvas"),r=box.getBoundingClientRect();c.width=r.width;c.height=r.height;
+  const x=c.getContext("2d"),gr=x.createLinearGradient(0,0,c.width,c.height);gr.addColorStop(0,"#e11d2e");gr.addColorStop(1,"#1d3a8a");
+  x.fillStyle=gr;x.fillRect(0,0,c.width,c.height);x.fillStyle="#fff";x.font="28px Bangers,Impact,sans-serif";x.textAlign="center";x.fillText("🕷️ Scratch here",c.width/2,c.height/2+9);
+  let down=false,fin=false,k=0;
+  const sc=e=>{if(!down||fin)return;const b=c.getBoundingClientRect();x.globalCompositeOperation="destination-out";x.beginPath();x.arc(e.clientX-b.left,e.clientY-b.top,24,0,7);x.fill();
+    if(++k%6)return;const d=x.getImageData(0,0,c.width,c.height).data;let n=0,t=0;for(let i=3;i<d.length;i+=80){t++;if(d[i]===0)n++}
+    if(n/t>.45){fin=true;c.style.opacity=0;c.style.pointerEvents="none";boom(70);if(--left===0)setTimeout(()=>{$("fin").classList.remove("hide");$("fin").scrollIntoView({behavior:"smooth",block:"center"});boom(180)},700)}};
+  c.onpointerdown=e=>{down=true;c.setPointerCapture(e.pointerId);sc(e)};c.onpointermove=sc;c.onpointerup=()=>down=false;
+}
+// countdown
+if(COUNTDOWN_DATE){$("cdw").classList.remove("hide");$("cdt").textContent=COUNTDOWN_LABEL;
+  const tick=()=>{let ms=Math.max(0,new Date(COUNTDOWN_DATE+"T00:00:00")-new Date());$("cd1").textContent=Math.floor(ms/864e5);$("cd2").textContent=Math.floor(ms/36e5)%24;$("cd3").textContent=Math.floor(ms/6e4)%60};tick();setInterval(tick,30000)}
+// open when
+OPEN_WHEN.forEach(o=>{const d=document.createElement("div");d.className="ow";
+  d.innerHTML='<button class="bang">Open when '+o.w+'</button><p class="hide">'+o.t+'</p>';
+  d.firstChild.onclick=()=>d.querySelector("p").classList.toggle("hide");$("ow").appendChild(d)});
+// photos and media
+if(PHOTOS.length){$("galw").classList.remove("hide");PHOTOS.forEach(s=>{const i=new Image();i.src=s;i.alt="A moment together";$("gal").appendChild(i)})}
+const links=[];if(VIDEO_URL)links.push({l:"Watch my video message",u:VIDEO_URL});PLAYLISTS.forEach(p=>{if(p.u)links.push(p)});
+if(links.length){$("mediaw").classList.remove("hide");links.forEach(k=>{const a=document.createElement("a");a.className="btn bang";a.textContent=k.l;a.href=k.u;a.target="_blank";a.rel="noopener";$("media").appendChild(a)})}
+$("open").onclick=()=>{$("s1").classList.add("hide");$("s2").classList.remove("hide");boom(140);document.querySelectorAll(".sc").forEach(scratch)};
+$("again").onclick=()=>boom(200);
+// confetti: Spider-Man and Spain colours
+const cv=$("cf"),cx=cv.getContext("2d");let ps=[];
+function rs(){cv.width=innerWidth;cv.height=innerHeight}addEventListener("resize",rs);rs();
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+function boom(k){if(reduce)k=Math.min(k,20);const cols=["#e11d2e","#fbbf24","#1d3a8a","#fff"];
+  for(let i=0;i<k;i++)ps.push({x:innerWidth/2,y:innerHeight*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*14-3,s:5+Math.random()*7,c:cols[i%4],r:Math.random()*6,l:1})}
+(function f(){cx.clearRect(0,0,cv.width,cv.height);ps=ps.filter(p=>p.l>0&&p.y<innerHeight+20);
+  ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;p.l-=.004;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore()});
+  requestAnimationFrame(f)})();
+</script>
+</body>
+</html>
