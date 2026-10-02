@@ -172,6 +172,61 @@
       font-size: 16px;
     }
     .choice-button:hover { background: rgba(15, 23, 42, 0.78); }
+    .panel.theme-picker {
+      width: min(100%, 344px);
+      padding: 18px 14px;
+    }
+    .panel.theme-picker .eyebrow { margin-bottom: 4px; }
+    .panel.theme-picker h1 { margin-bottom: 8px; font-size: 32px; }
+    .panel.theme-picker > p:not(.eyebrow) { margin-bottom: 12px; font-size: 14px; }
+    #choices.theme-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin: 12px 0 0;
+    }
+    .theme-option {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 76px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.32);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #fff;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.25;
+      box-shadow: none;
+    }
+    .theme-option:hover { background: rgba(15, 23, 42, 0.78); }
+    .theme-icon {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.14);
+      font-size: 18px;
+    }
+    .theme-copy { display: grid; gap: 4px; min-width: 0; }
+    .theme-name { font-size: 14px; font-weight: 700; }
+    .theme-description { color: #cbd5e1; font-size: 11px; font-weight: 400; }
+    .theme-count { color: #fde68a; font-size: 10px; font-weight: 700; }
+    @media (max-width: 380px) {
+      .panel.theme-picker { padding: 12px 10px; }
+      .panel.theme-picker h1 { font-size: 28px; }
+      .panel.theme-picker > p:not(.eyebrow) { margin-bottom: 6px; font-size: 12px; }
+      #choices.theme-grid { gap: 7px; margin-top: 8px; }
+      .theme-option { min-height: 54px; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; padding: 7px; }
+      .theme-icon { width: 26px; height: 26px; font-size: 16px; }
+      .theme-description { display: none; }
+      .theme-copy { gap: 2px; }
+      .theme-name { font-size: 12px; }
+      .theme-count { font-size: 9px; }
+    }
     #answerInput {
       width: 100%;
       min-height: 94px;
@@ -189,6 +244,15 @@
     }
     #recap { text-align: left; font-size: 14px; }
     #recap p { margin: 0 0 10px; font-size: 14px; }
+    .reward-photo {
+      display: block;
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 12px;
+      border: 3px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+      object-fit: cover;
+    }
     #startBtn[hidden] { display: none; }
   </style>
 </head>
@@ -232,6 +296,7 @@
     const photoButton = document.getElementById('photoButton');
     const photoInput = document.getElementById('photoInput');
     const overlay = document.getElementById('overlay');
+    const panelEl = document.querySelector('.panel');
     const titleEl = document.getElementById('title');
     const messageEl = document.getElementById('message');
     const choicesEl = document.getElementById('choices');
@@ -266,42 +331,138 @@
     heartImage.onerror = () => { heartImage = null; };
     heartImage.src = localStorage.getItem('sawsen-heart-photo') || 'sawsen-photo.jpg';
 
-    const questions = [
+    const themes = [
       {
-        summary: 'Path',
-        prompt: 'You wake up in a peaceful place with two paths: a flower-lined street and a street full of stars. Which do you choose?',
-        choices: ['The street of flowers', 'The street of stars']
-      },
-      {
-        summary: 'Key',
-        prompt: 'At a great door, you find two keys, one red and one blue. Which key do you choose?',
-        choices: ['The red key', 'The blue key']
-      },
-      {
-        summary: 'Doorway path',
-        prompt: 'The door opens onto two paths: the path of ذكريات (memories) and the path of أمنيات (wishes). Where do you go?',
-        choices: ['The path of memories', 'The path of wishes']
-      },
-      {
-        summary: 'Gift',
-        prompt: 'In the room, there are three gifts. Which one do you choose?',
-        choices: [
-          'The big gift',
-          'The small gift',
-          { label: 'The medium gift', feedback: 'The medium gift is empty. Inside, you find a special question just for you.' }
+        id: 'story',
+        icon: '♥',
+        name: 'Our Story',
+        description: 'Paths, keys, and wishes',
+        gift: 'A tiny wish from me, saved just for you.',
+        punchline: 'Our story is my favorite plot twist.',
+        questions: [
+          { summary: 'Path', prompt: 'You wake up in a peaceful place with two paths: a flower-lined street and a street full of stars. Which do you choose?', choices: ['The street of flowers', 'The street of stars'] },
+          { summary: 'Key', prompt: 'At a great door, you find two keys, one red and one blue. Which key do you choose?', choices: ['The red key', 'The blue key'] },
+          { summary: 'Doorway path', prompt: 'The door opens onto two paths: the path of ذكريات (memories) and the path of أمنيات (wishes). Where do you go?', choices: ['The path of memories', 'The path of wishes'] },
+          { summary: 'Gift', prompt: 'In the room, there are three gifts. Which one do you choose?', choices: ['The big gift', 'The small gift', { label: 'The medium gift', feedback: 'The medium gift is empty. Inside, you find a special question just for you.' }] },
+          { summary: 'Honest conversations', prompt: 'What do you feel when we talk honestly?', answer: true },
+          { summary: 'Beach wish', prompt: 'At the beach, you can send your أمنية (wish) to one person. Who would you send it to?', answer: true }
         ]
       },
       {
-        summary: 'Honest conversations',
-        prompt: 'What do you feel when we talk honestly?',
-        answer: true
+        id: 'sport',
+        icon: '⚽',
+        name: 'Sport',
+        description: 'Play as a team',
+        gift: 'Your very own tiny champion trophy.',
+        punchline: 'You scored the best teammate. (It is me.)',
+        questions: [
+          { summary: 'Game to play', prompt: 'Which sport would you most like us to play together?', choices: ['Football', 'Basketball', 'Tennis'] },
+          { summary: 'Team role', prompt: 'What would be your favorite role on our team?', choices: ['Team captain', 'Playmaker', 'Loudest supporter'] },
+          { summary: 'Best skill', prompt: 'Which skill would you want to master?', choices: ['Lightning speed', 'Perfect teamwork', 'Unstoppable accuracy'] },
+          { summary: 'Friendly challenge', prompt: 'Pick our first friendly challenge.', choices: ['Penalty shootout', 'Free-throw contest', 'Tennis rally'] },
+          { summary: 'Victory treat', prompt: 'After a big win, what should we celebrate with?', choices: ['Pizza', 'Ice cream', 'A little victory dance'] },
+          { summary: 'Celebration', prompt: 'How should we celebrate the final point?', choices: ['A high five', 'A silly dance', 'A team selfie'] }
+        ]
       },
       {
-        summary: 'Beach wish',
-        prompt: 'At the beach, you can send your أمنية (wish) to one person. Who would you send it to?',
-        answer: true
+        id: 'travel',
+        icon: '✈',
+        name: 'Travel',
+        description: 'Plan a little getaway',
+        gift: 'A pretend ticket for our next little adventure.',
+        punchline: 'We might get lost, but at least we will have snacks.',
+        questions: [
+          { summary: 'Destination', prompt: 'Choose the setting for our dream getaway.', choices: ['A sunny beach', 'A quiet mountain cabin', 'A lively city'] },
+          { summary: 'Journey', prompt: 'How should our adventure begin?', choices: ['A road trip', 'A train ride', 'A flight to somewhere new'] },
+          { summary: 'First stop', prompt: 'What should we do first after arriving?', choices: ['Explore the streets', 'Find a beautiful view', 'Try the local food'] },
+          { summary: 'Travel keepsake', prompt: 'What little souvenir would you bring home?', choices: ['A postcard', 'A tiny handmade gift', 'A favorite photo'] },
+          { summary: 'Travel style', prompt: 'Which kind of travel day sounds best?', choices: ['A full plan and a map', 'A spontaneous wander', 'Relax and see where the day goes'] },
+          { summary: 'Travel memory', prompt: 'What would make the trip feel unforgettable?', choices: ['A new experience', 'A beautiful sunset', 'Sharing it with someone special'] }
+        ]
+      },
+      {
+        id: 'dreams',
+        icon: '✦',
+        name: 'Dreams',
+        description: 'Imagine what comes next',
+        gift: 'One little wish, wrapped up and waiting for you.',
+        punchline: 'Dream big. I already saved you the best seat.',
+        questions: [
+          { summary: 'Perfect day', prompt: 'If you had a completely free day, what would you choose?', choices: ['A cozy day at home', 'A day somewhere new', 'A day with favorite people'] },
+          { summary: 'Superpower', prompt: 'Which superpower would you pick?', choices: ['Teleport anywhere', 'Speak every language', 'Pause time for a little while'] },
+          { summary: 'New skill', prompt: 'What would you love to learn next?', choices: ['Play an instrument', 'Speak a new language', 'Master a sport'] },
+          { summary: 'Dream home', prompt: 'What would your dream home feel like?', choices: ['Peaceful and surrounded by nature', 'Bright and close to the sea', 'Warm and full of friends'] },
+          { summary: 'Big celebration', prompt: 'When you reach a big dream, how should we celebrate?', choices: ['A special dinner', 'A spontaneous adventure', 'A quiet moment together'] },
+          { summary: 'One wish', prompt: 'If one wish could come true this year, which would you choose?', choices: ['More joy every day', 'A dream adventure', 'A wish for someone you love'] }
+        ]
+      },
+      {
+        id: 'music',
+        icon: '♫',
+        name: 'Music',
+        description: 'Songs and favorite sounds',
+        gift: 'A front-row seat to our next sing-along.',
+        punchline: 'No skips when you are picking the playlist.',
+        questions: [
+          { summary: 'Playlist mood', prompt: 'What should our shared playlist sound like?', choices: ['Happy pop songs', 'Chill and cozy music', 'A little bit of everything'] },
+          { summary: 'Live music', prompt: 'Which live music night would you choose?', choices: ['A big concert', 'A tiny acoustic show', 'Music under the stars'] },
+          { summary: 'Car song', prompt: 'What happens when your favorite song comes on in the car?', choices: ['Sing every word', 'Turn it up and dance', 'Play it again'] },
+          { summary: 'Dance style', prompt: 'Pick our dance-floor style.', choices: ['Learn a real routine', 'Make up silly moves', 'Just sway together'] },
+          { summary: 'Soundtrack', prompt: 'Which sound belongs in the soundtrack of a perfect day?', choices: ['Rain on the window', 'Waves at the beach', 'A favorite song together'] },
+          { summary: 'Dedication', prompt: 'If you dedicated one song to someone special, what would it say?', choices: ['You make me smile', 'We can go anywhere', 'You are my favorite person'] }
+        ]
+      },
+      {
+        id: 'food',
+        icon: '🍓',
+        name: 'Food',
+        description: 'Favorite treats and little dates',
+        gift: 'A tiny invitation to our next dessert date.',
+        punchline: 'I promise to share the last bite. Probably.',
+        questions: [
+          { summary: 'Favorite meal', prompt: 'What kind of meal should we go out for?', choices: ['Italian', 'Tunisian', 'Something new'] },
+          { summary: 'Dessert', prompt: 'Pick the perfect dessert to share.', choices: ['Chocolate cake', 'Ice cream', 'Fresh pastries'] },
+          { summary: 'Cooking together', prompt: 'What should we try making together?', choices: ['Homemade pizza', 'A sweet cake', 'A family recipe'] },
+          { summary: 'Picnic', prompt: 'What belongs in our perfect picnic basket?', choices: ['Fruit and lemonade', 'Sandwiches and snacks', 'A little bit of everything'] },
+          { summary: 'Morning treat', prompt: 'Choose a cozy breakfast treat.', choices: ['Pancakes', 'Croissants', 'Fruit and yogurt'] },
+          { summary: 'Food adventure', prompt: 'Which food adventure would you pick?', choices: ['Visit a new café', 'Try street food', 'Cook a surprise dinner'] }
+        ]
+      },
+      {
+        id: 'movies',
+        icon: '🎬',
+        name: 'Movies',
+        description: 'Pick our next movie night',
+        gift: 'A golden ticket for one movie night together.',
+        punchline: 'You pick the movie; I pick the snacks.',
+        questions: [
+          { summary: 'Movie mood', prompt: 'What should we watch tonight?', choices: ['A funny comedy', 'A big adventure', 'A sweet romance'] },
+          { summary: 'Movie night', prompt: 'Where should we watch it?', choices: ['Cozy at home', 'Big cinema screen', 'Outside under the stars'] },
+          { summary: 'Snack pick', prompt: 'Choose the essential movie snack.', choices: ['Popcorn', 'Chocolate', 'A mix of sweet and salty'] },
+          { summary: 'Movie role', prompt: 'What is your movie-night superpower?', choices: ['Pick the perfect film', 'Remember every quote', 'Never fall asleep'] },
+          { summary: 'Rewatch', prompt: 'What kind of movie deserves a rewatch?', choices: ['A childhood favorite', 'Something that makes us laugh', 'A story with a happy ending'] },
+          { summary: 'Credits', prompt: 'What should happen after the movie ends?', choices: ['Talk about our favorite scene', 'Take a silly photo', 'Start planning the next movie night'] }
+        ]
+      },
+      {
+        id: 'friends',
+        icon: '☀',
+        name: 'friends',
+        description: 'Little things that make us smile',
+        gift: 'A pocket-sized reminder that I am cheering for you.',
+        punchline: 'Best-friend points: still undefeated.',
+        questions: [
+          { summary: 'Good day', prompt: 'What small thing can turn an ordinary day around?', choices: ['A kind message', 'A favorite snack', 'A reason to laugh'] },
+          { summary: 'Teamwork', prompt: 'What makes a great team?', choices: ['Listening to each other', 'Making each other laugh', 'Showing up when it matters'] },
+          { summary: 'Hangout', prompt: 'Choose our ideal easy-going hangout.', choices: ['A long walk', 'A board game', 'Coffee and conversation'] },
+          { summary: 'Funny memory', prompt: 'What is the best kind of memory to make?', choices: ['A spontaneous adventure', 'A silly inside joke', 'A quiet, honest talk'] },
+          { summary: 'Encouragement', prompt: 'When you have a tough day, what helps most?', choices: ['Someone who listens', 'A little distraction', 'A reminder that you can do it'] },
+          { summary: 'Tradition', prompt: 'What little tradition should we start?', choices: ['A monthly adventure', 'A shared playlist', 'A celebration for small wins'] }
+        ]
       }
     ];
+
+    let activeTheme = null;
 
     function resetPlayer() {
       player = {
@@ -314,6 +475,8 @@
     }
 
     function setOverlay(title, message, buttonText) {
+      panelEl.classList.remove('theme-picker');
+      choicesEl.classList.remove('theme-grid');
       titleEl.textContent = title;
       messageEl.textContent = message;
       startBtn.textContent = buttonText;
@@ -363,11 +526,46 @@
       updateScoreDisplay();
     }
 
-    function startGame() {
+    function startGame(themeId) {
+      activeTheme = themes.find((theme) => theme.id === themeId);
+      if (!activeTheme) return;
       questionIndex = 0;
       answers = [];
       resetGame();
       startRound();
+    }
+
+    function renderThemePicker() {
+      gameState = 'theme-select';
+      setOverlay('Choose a theme', 'Pick an adventure to begin your six levels.', '');
+      panelEl.classList.add('theme-picker');
+      choicesEl.classList.add('theme-grid');
+      startBtn.hidden = true;
+
+      for (const theme of themes) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-option';
+        const icon = document.createElement('span');
+        icon.className = 'theme-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = theme.icon;
+        const copy = document.createElement('span');
+        copy.className = 'theme-copy';
+        const name = document.createElement('span');
+        name.className = 'theme-name';
+        name.textContent = theme.name;
+        const description = document.createElement('span');
+        description.className = 'theme-description';
+        description.textContent = theme.description;
+        const count = document.createElement('span');
+        count.className = 'theme-count';
+        count.textContent = '6 levels';
+        copy.append(name, description, count);
+        button.append(icon, copy);
+        button.addEventListener('click', () => startGame(theme.id));
+        choicesEl.append(button);
+      }
     }
 
     function startRound() {
@@ -397,9 +595,9 @@
     }
 
     function renderQuestion() {
-      const question = questions[questionIndex];
+      const question = activeTheme.questions[questionIndex];
       gameState = 'question';
-      setOverlay(`Level ${questionIndex + 1} of ${questions.length}`, question.prompt, question.answer ? 'Save answer' : 'Continue');
+      setOverlay(`${activeTheme.name} · Level ${questionIndex + 1} of 6`, question.prompt, question.answer ? 'Save answer' : 'Continue');
 
       if (question.answer) {
         const input = document.createElement('textarea');
@@ -431,25 +629,66 @@
 
     function advanceQuestion() {
       questionIndex += 1;
-      if (questionIndex < questions.length) {
+      if (questionIndex < activeTheme.questions.length) {
         gameState = 'round-ready';
         updateScoreDisplay();
-        setOverlay(`Level ${questionIndex + 1} ready`, `Your score carries over. Reach ${getTargetScore()} points to unlock the next question.`, `Play level ${questionIndex + 1}`);
+        setOverlay(`${activeTheme.name} · Level ${questionIndex + 1} ready`, `Your score carries over. Reach ${getTargetScore()} points to unlock the next question.`, `Play level ${questionIndex + 1}`);
         return;
       }
 
-      gameState = 'complete';
-      setOverlay('Your little journey', 'Thank you for sharing your choices and answers.', 'Play again');
-      answers.forEach((answer, index) => {
-        const entry = document.createElement('p');
-        entry.textContent = `${index + 1}. ${questions[index].summary}: ${answer || 'No answer given.'}`;
-        recapEl.append(entry);
+      gameState = 'reward';
+      setOverlay(`${activeTheme.name} complete!`, 'You finished all six levels. Here is your little reward.', 'Choose another theme');
+      if (heartImage?.complete && heartImage.naturalWidth > 0) {
+        const photo = document.createElement('img');
+        photo.className = 'reward-photo';
+        photo.src = heartImage.currentSrc || heartImage.src;
+        photo.alt = 'Your little reward';
+        recapEl.append(photo);
+      }
+
+      const gift = document.createElement('p');
+      gift.textContent = `🎁 Small gift: ${activeTheme.gift}`;
+      recapEl.append(gift);
+
+      const songButton = document.createElement('button');
+      songButton.type = 'button';
+      songButton.className = 'choice-button';
+      songButton.textContent = 'Play your little song';
+      songButton.addEventListener('click', playGiftSong);
+      recapEl.append(songButton);
+
+      const punchline = document.createElement('p');
+      punchline.textContent = `One last thing: ${activeTheme.punchline}`;
+      recapEl.append(punchline);
+    }
+
+    function playGiftSong() {
+      const AudioContextType = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextType) return;
+
+      const audioContext = new AudioContextType();
+      const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 523.25];
+      notes.forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        const volume = audioContext.createGain();
+        const startAt = audioContext.currentTime + index * 0.22;
+        oscillator.type = 'triangle';
+        oscillator.frequency.value = frequency;
+        volume.gain.setValueAtTime(0.0001, startAt);
+        volume.gain.exponentialRampToValueAtTime(0.13, startAt + 0.02);
+        volume.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.19);
+        oscillator.connect(volume);
+        volume.connect(audioContext.destination);
+        oscillator.start(startAt);
+        oscillator.stop(startAt + 0.2);
       });
+      window.setTimeout(() => audioContext.close(), notes.length * 240);
     }
 
     function handleOverlayAction() {
-      if (gameState === 'ready' || gameState === 'complete') {
-        startGame();
+      if (gameState === 'theme-select') return;
+      if (gameState === 'reward') {
+        renderThemePicker();
         return;
       }
 
@@ -459,7 +698,7 @@
       }
 
       if (gameState !== 'question') return;
-      const question = questions[questionIndex];
+      const question = activeTheme.questions[questionIndex];
       if (question.answer) {
         const input = document.getElementById('answerInput');
         const answer = input.value.trim();
@@ -623,34 +862,426 @@
       ctx.fill();
     }
 
+    function drawSoccerBall(x, y, size) {
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      for (let index = 0; index < 5; index += 1) {
+        const angle = (Math.PI * 2 * index) / 5 - Math.PI / 2;
+        const pointX = x + Math.cos(angle) * size * 0.36;
+        const pointY = y + Math.sin(angle) * size * 0.36;
+        if (index === 0) ctx.moveTo(pointX, pointY);
+        else ctx.lineTo(pointX, pointY);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawTravelCase(x, y, size) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(x - size * 0.9, y - size * 0.55, size * 1.8, size * 1.35);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - size * 0.9, y - size * 0.55, size * 1.8, size * 1.35);
+      ctx.strokeRect(x - size * 0.35, y - size * 0.85, size * 0.7, size * 0.3);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(x - size * 0.12, y - size * 0.5, size * 0.24, size * 1.25);
+    }
+
+    function drawStar(x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (let index = 0; index < 10; index += 1) {
+        const radius = index % 2 === 0 ? size : size * 0.45;
+        const angle = (Math.PI * index) / 5 - Math.PI / 2;
+        const pointX = x + Math.cos(angle) * radius;
+        const pointY = y + Math.sin(angle) * radius;
+        if (index === 0) ctx.moveTo(pointX, pointY);
+        else ctx.lineTo(pointX, pointY);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawMusicNote(x, y, size) {
+      ctx.strokeStyle = '#f0abfc';
+      ctx.fillStyle = '#f0abfc';
+      ctx.lineWidth = Math.max(3, size * 0.18);
+      ctx.beginPath();
+      ctx.ellipse(x - size * 0.35, y + size * 0.45, size * 0.32, size * 0.22, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.05, y + size * 0.35);
+      ctx.lineTo(x - size * 0.05, y - size * 0.8);
+      ctx.lineTo(x + size * 0.7, y - size * 0.62);
+      ctx.lineTo(x + size * 0.7, y + size * 0.05);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x + size * 0.42, y + size * 0.1, size * 0.32, size * 0.22, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawCupcake(x, y, size) {
+      ctx.fillStyle = '#f9a8d4';
+      ctx.beginPath();
+      ctx.moveTo(x - size * 0.65, y - size * 0.05);
+      ctx.lineTo(x + size * 0.65, y - size * 0.05);
+      ctx.lineTo(x + size * 0.45, y + size * 0.8);
+      ctx.lineTo(x - size * 0.45, y + size * 0.8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#fff1f2';
+      ctx.beginPath();
+      ctx.arc(x - size * 0.35, y - size * 0.1, size * 0.4, Math.PI, 0);
+      ctx.arc(x + size * 0.28, y - size * 0.25, size * 0.42, Math.PI, 0);
+      ctx.arc(x, y - size * 0.42, size * 0.38, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(x, y - size * 0.82, size * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawMovieTicket(x, y, size) {
+      ctx.fillStyle = '#fde68a';
+      ctx.fillRect(x - size * 0.9, y - size * 0.55, size * 1.8, size * 1.1);
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - size * 0.9, y - size * 0.55, size * 1.8, size * 1.1);
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x, y - size * 0.45);
+      ctx.lineTo(x, y + size * 0.45);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawStar(x - size * 0.42, y, size * 0.24, '#be123c');
+    }
+
+    function drawChatBadge(x, y, size) {
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.82, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f766e';
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.67, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      for (let index = -1; index <= 1; index += 1) {
+        ctx.beginPath();
+        ctx.arc(x + index * size * 0.3, y, size * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     function drawBackground() {
+      const themeId = activeTheme?.id || 'story';
       const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      sky.addColorStop(0, '#7dd3fc');
-      sky.addColorStop(0.6, '#dbeafe');
-      sky.addColorStop(1, '#c7d2fe');
+      const palettes = {
+        story: ['#f9a8d4', '#ffe4e6', '#fef3c7'],
+        sport: ['#60a5fa', '#bae6fd', '#16a34a'],
+        travel: ['#fb923c', '#fde68a', '#fda4af'],
+        dreams: ['#111827', '#312e81', '#581c87'],
+        music: ['#18112f', '#581c87', '#be185d'],
+        food: ['#fb923c', '#ffedd5', '#84cc16'],
+        movies: ['#111827', '#450a0a', '#7f1d1d'],
+        friends: ['#7dd3fc', '#e0f2fe', '#fb7185']
+      };
+      const colors = palettes[themeId] || palettes.story;
+      sky.addColorStop(0, colors[0]);
+      sky.addColorStop(0.7, colors[1]);
+      sky.addColorStop(1, colors[2]);
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      for (let i = 0; i < 18; i++) {
-        const x = (i * 37 + (score * 3)) % canvas.width;
-        const y = (i * 53) % (canvas.height - 120);
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      if (themeId === 'sport') {
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(0, 260, canvas.width, 150);
+        for (let row = 0; row < 4; row += 1) {
+          for (let column = 0; column < 15; column += 1) {
+            ctx.fillStyle = ['#f87171', '#f8fafc', '#fbbf24', '#38bdf8'][(row + column) % 4];
+            ctx.fillRect(column * 30 + 4, 275 + row * 30, 18, 12);
+          }
+        }
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(0, 410, canvas.width, canvas.height - 410);
+        ctx.strokeStyle = 'rgba(240,253,244,0.55)';
+        ctx.lineWidth = 3;
+        for (let y = 470; y < canvas.height; y += 90) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
         ctx.beginPath();
-        ctx.arc(x, y, 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(canvas.width / 2, 575, 72, 0, Math.PI * 2);
+        ctx.stroke();
+        return;
       }
 
-      ctx.fillStyle = '#9ae6b4';
-      ctx.fillRect(0, canvas.height - 26, canvas.width, 26);
-      ctx.fillStyle = '#6ee7b7';
-      for (let i = 0; i < canvas.width; i += 22) {
-        ctx.fillRect(i, canvas.height - 26, 10, 10);
+      if (themeId === 'travel') {
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath();
+        ctx.arc(325, 145, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.moveTo(0, 420);
+        ctx.lineTo(105, 245);
+        ctx.lineTo(230, 420);
+        ctx.lineTo(340, 270);
+        ctx.lineTo(420, 410);
+        ctx.lineTo(420, 720);
+        ctx.lineTo(0, 720);
+        ctx.fill();
+        ctx.fillStyle = '#0f766e';
+        ctx.beginPath();
+        ctx.moveTo(0, 485);
+        ctx.lineTo(120, 355);
+        ctx.lineTo(250, 490);
+        ctx.lineTo(360, 375);
+        ctx.lineTo(420, 445);
+        ctx.lineTo(420, 720);
+        ctx.lineTo(0, 720);
+        ctx.fill();
+        ctx.strokeStyle = '#fef3c7';
+        ctx.lineWidth = 12;
+        ctx.beginPath();
+        ctx.moveTo(40, 720);
+        ctx.bezierCurveTo(130, 630, 285, 685, 220, 570);
+        ctx.bezierCurveTo(175, 495, 260, 470, 365, 450);
+        ctx.stroke();
+        return;
+      }
+
+      if (themeId === 'food') {
+        ctx.fillStyle = '#fff7ed';
+        ctx.fillRect(0, 310, canvas.width, 210);
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(0, 520, canvas.width, 200);
+        for (let row = 0; row < 5; row += 1) {
+          for (let column = 0; column < 8; column += 1) {
+            ctx.fillStyle = (row + column) % 2 === 0 ? '#ffedd5' : '#fb923c';
+            ctx.fillRect(column * 54, 555 + row * 34, 54, 34);
+          }
+        }
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(0, 505, canvas.width, 16);
+        ctx.fillStyle = '#fed7aa';
+        ctx.beginPath();
+        ctx.arc(90, 125, 38, 0, Math.PI * 2);
+        ctx.arc(330, 180, 26, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (themeId === 'movies') {
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(0, 0, 46, canvas.height);
+        ctx.fillRect(canvas.width - 46, 0, 46, canvas.height);
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(54, 110, canvas.width - 108, 300);
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 5;
+        ctx.strokeRect(54, 110, canvas.width - 108, 300);
+        ctx.fillStyle = 'rgba(251,191,36,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(210, 410);
+        ctx.lineTo(65, 615);
+        ctx.lineTo(355, 615);
+        ctx.fill();
+        ctx.fillStyle = '#991b1b';
+        for (let row = 0; row < 2; row += 1) {
+          for (let column = 0; column < 5; column += 1) {
+            ctx.fillRect(18 + column * 82, 590 + row * 55, 62, 30);
+          }
+        }
+        return;
+      }
+
+      if (themeId === 'friends') {
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath();
+        ctx.arc(320, 135, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#4d7c0f';
+        ctx.beginPath();
+        ctx.moveTo(0, 470);
+        ctx.quadraticCurveTo(105, 385, 210, 475);
+        ctx.quadraticCurveTo(315, 380, 420, 465);
+        ctx.lineTo(420, 720);
+        ctx.lineTo(0, 720);
+        ctx.fill();
+        ctx.fillStyle = '#fda4af';
+        ctx.beginPath();
+        ctx.moveTo(150, 720);
+        ctx.quadraticCurveTo(180, 585, 110, 475);
+        ctx.lineTo(290, 475);
+        ctx.quadraticCurveTo(235, 600, 300, 720);
+        ctx.fill();
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(45, 340, 18, 140);
+        ctx.beginPath();
+        ctx.arc(54, 320, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(355, 320, 16, 160);
+        ctx.beginPath();
+        ctx.arc(363, 300, 42, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (themeId === 'dreams' || themeId === 'music') {
+        for (let index = 0; index < 42; index += 1) {
+          const x = (index * 97 + 23) % canvas.width;
+          const y = (index * 61 + 30) % 430;
+          const radius = index % 5 === 0 ? 3 : 1.5;
+          ctx.fillStyle = index % 3 === 0 ? '#fde68a' : 'rgba(255,255,255,0.85)';
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (themeId === 'dreams') {
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.arc(326, 130, 42, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#25215d';
+          ctx.beginPath();
+          ctx.arc(344, 113, 40, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#312e81';
+          ctx.beginPath();
+          ctx.ellipse(210, 695, 280, 130, 0, Math.PI, Math.PI * 2);
+          ctx.fill();
+          return;
+        }
+        ctx.fillStyle = '#1f1235';
+        ctx.fillRect(0, 490, canvas.width, 230);
+        for (let index = 0; index < 14; index += 1) {
+          const barHeight = 24 + ((index * 31) % 80);
+          ctx.fillStyle = ['#f0abfc', '#22d3ee', '#fb7185'][index % 3];
+          ctx.globalAlpha = 0.8;
+          ctx.fillRect(index * 32, 625 - barHeight, 18, barHeight);
+        }
+        ctx.globalAlpha = 1;
+        return;
+      }
+
+      for (let index = 0; index < 16; index += 1) {
+        const x = (index * 83 + 19) % canvas.width;
+        const y = (index * 47 + 35) % 430;
+        drawStar(x, y, index % 4 === 0 ? 6 : 3, 'rgba(255,255,255,0.85)');
+      }
+      ctx.fillStyle = '#86a052';
+      ctx.fillRect(0, 570, canvas.width, 150);
+      for (let x = 18; x < canvas.width; x += 42) {
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.arc(x, 590 + (x % 3) * 8, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fef3c7';
+        ctx.beginPath();
+        ctx.arc(x + 7, 610 + (x % 2) * 5, 4, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
     function drawPlayer() {
       const x = player.x;
       const y = player.y;
+      if (activeTheme?.id === 'sport') {
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(x - 38, y - 14, 76, 38);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(x - 38, y + 8, 76, 16);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - 6, y - 14, 12, 20);
+        return;
+      }
+      if (activeTheme?.id === 'travel') {
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(x - 34, y - 16, 68, 38);
+        ctx.strokeStyle = '#fcd34d';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x - 34, y - 16, 68, 38);
+        ctx.strokeRect(x - 13, y - 25, 26, 9);
+        ctx.fillStyle = '#fcd34d';
+        ctx.fillRect(x - 5, y - 14, 10, 34);
+        return;
+      }
+      if (activeTheme?.id === 'dreams') {
+        ctx.fillStyle = '#e9d5ff';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 5, 40, 16, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#c4b5fd';
+        ctx.fillRect(x - 34, y + 5, 68, 10);
+        drawStar(x, y - 15, 12, '#fde68a');
+        return;
+      }
+      if (activeTheme?.id === 'music') {
+        ctx.fillStyle = '#312e81';
+        ctx.fillRect(x - 38, y - 18, 76, 38);
+        ctx.strokeStyle = '#f0abfc';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - 38, y - 18, 76, 38);
+        ctx.fillStyle = '#22d3ee';
+        ctx.beginPath();
+        ctx.arc(x - 19, y, 10, 0, Math.PI * 2);
+        ctx.arc(x + 19, y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f0abfc';
+        ctx.fillRect(x - 5, y - 14, 10, 6);
+        return;
+      }
+      if (activeTheme?.id === 'food') {
+        ctx.fillStyle = '#fef3c7';
+        ctx.beginPath();
+        ctx.ellipse(x, y + 4, 40, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        drawCupcake(x, y - 14, 12);
+        return;
+      }
+      if (activeTheme?.id === 'movies') {
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(x - 32, y - 18, 64, 38);
+        ctx.fillStyle = '#fff7ed';
+        ctx.beginPath();
+        ctx.moveTo(x - 32, y - 18);
+        ctx.lineTo(x + 32, y - 18);
+        ctx.lineTo(x + 25, y - 30);
+        ctx.lineTo(x + 12, y - 18);
+        ctx.lineTo(x, y - 30);
+        ctx.lineTo(x - 12, y - 18);
+        ctx.lineTo(x - 25, y - 30);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - 26, y + 15, 52, 6);
+        return;
+      }
+      if (activeTheme?.id === 'friends') {
+        ctx.fillStyle = '#854d0e';
+        ctx.fillRect(x - 38, y - 4, 76, 18);
+        ctx.fillRect(x - 34, y + 12, 7, 14);
+        ctx.fillRect(x + 27, y + 12, 7, 14);
+        ctx.fillStyle = '#fda4af';
+        ctx.fillRect(x - 38, y - 12, 76, 9);
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(x - 34, y - 25, 7, 15);
+        ctx.fillRect(x + 27, y - 25, 7, 15);
+        return;
+      }
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(x - player.w / 2, y, player.w, 8);
       ctx.fillStyle = '#f8fafc';
@@ -662,9 +1293,25 @@
     }
 
     function drawItem(item) {
-      if (item.type === 'heart') drawHeart(item.x, item.y, item.size, '#ef4444');
-      if (item.type === 'gift') drawGift(item.x, item.y, item.size, '#fbbf24');
-      if (item.type === 'cloud') drawCloud(item.x, item.y, item.size, '#dbeafe');
+      const themeId = activeTheme?.id || 'story';
+      if (item.type === 'heart') {
+        if (themeId === 'sport') drawSoccerBall(item.x, item.y, item.size);
+        else if (themeId === 'travel') drawTravelCase(item.x, item.y, item.size);
+        else if (themeId === 'dreams') drawStar(item.x, item.y, item.size, '#fde68a');
+        else if (themeId === 'music') drawMusicNote(item.x, item.y, item.size);
+        else if (themeId === 'food') drawCupcake(item.x, item.y, item.size);
+        else if (themeId === 'movies') drawMovieTicket(item.x, item.y, item.size);
+        else if (themeId === 'friends') drawChatBadge(item.x, item.y, item.size);
+        else drawHeart(item.x, item.y, item.size, '#ef4444');
+      }
+      if (item.type === 'gift') {
+        const giftColors = { story: '#fb7185', sport: '#fbbf24', travel: '#38bdf8', dreams: '#c084fc', music: '#2dd4bf', food: '#f97316', movies: '#fde68a', friends: '#fb7185' };
+        drawGift(item.x, item.y, item.size, giftColors[themeId] || '#fbbf24');
+      }
+      if (item.type === 'cloud') {
+        const cloudColors = { story: '#fff1f2', sport: '#cbd5e1', travel: '#e2e8f0', dreams: '#c4b5fd', music: '#f0abfc', food: '#fff7ed', movies: '#fecaca', friends: '#e0f2fe' };
+        drawCloud(item.x, item.y, item.size, cloudColors[themeId] || '#dbeafe');
+      }
     }
 
     function drawParticles() {
@@ -748,8 +1395,7 @@
 
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Space' || event.code === 'Enter') {
-        if (gameState === 'ready' || gameState === 'complete') startGame();
-        else if (gameState === 'ended' || gameState === 'round-ready') startRound();
+        if (gameState === 'ended' || gameState === 'round-ready') startRound();
       }
       moveByKey(event.code, true);
     });
@@ -762,7 +1408,7 @@
 
     resetRound();
     draw();
-    setOverlay('Star Catch', 'Catch the glowing hearts and gifts, dodge the storm clouds, and reach 9 points to unlock the first question.', 'Start the mission');
+    renderThemePicker();
   </script>
 </body>
 </html>
